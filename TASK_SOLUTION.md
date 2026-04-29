@@ -6,6 +6,8 @@
 
 Корректно отображается в GitHub, GitLab, Mermaid Live Editor и других инструментах с поддержкой Mermaid.
 
+Стандартный тип `bigint` для `id` в зависимости от бизнес-условий может быть избыточным, можно заменить на `int unsigned`.
+
 ```mermaid
 erDiagram
     users ||--o{ orders : places
@@ -215,15 +217,18 @@ erDiagram
 - foreign key `order_items.order_id`;
 - foreign key `order_items.product_id`;
 - foreign key `order_deliveries.order_id`;
+- foreign key `pickup_deliveries.order_delivery_id`;
+- foreign key `address_deliveries.order_delivery_id`;
 - foreign key `order_payments.order_id`;
 - foreign key `credit_payment_details.order_payment_id`;
-- индекс по `orders.user_id`;
 - индекс по `orders.status`;
-- индекс по `order_items.product_id`;
+- индекс по `order_payments.status`;
 - check constraint для `quantity > 0`;
 - check constraint для `price >= 0`;
 - check constraint для `total_sum >= 0`;
 - check constraint для `term_months > 0`.
+
+Индексы указаны по минимуму (для статусов полезны чаще всего), но лучше проектировать под конкретные частые запросы.
 
 Также желательно обеспечить, чтобы у одного заказа была только одна запись доставки и одна запись оплаты.
 
