@@ -111,11 +111,53 @@ erDiagram
 
 ---
 
-## 2. Описание структуры БД
+## 2. Описание сущностей и соответствующей структуры БД
 
-### `orders`
+### User
 
-Основная таблица заказов.
+Таблица пользователей `users`.
+
+| Поле         | Описание                   |
+|--------------|----------------------------|
+| `id`         | Идентификатор пользователя |
+| `name`       | Имя пользователя           |
+| `email`      | E-mail пользователя        |
+| `password`   | Пароль пользователя        |
+| `created_at` | Дата создания              |
+| `updated_at` | Дата обновления            |
+
+Пользователь (клиент), который оформляет заказ.
+
+Может хранить личные данные, контакты и т.д.
+
+---
+
+### Product
+
+Таблица товаров `products`.
+
+| Поле         | Описание             |
+|--------------|----------------------|
+| `id`         | Идентификатор товара |
+| `name`       | Название товара      |
+| `price`      | Цена товара          |
+| `is_active`  | Активность товара    |
+| `created_at` | Дата создания        |
+| `updated_at` | Дата обновления      |
+
+Товар из каталога.
+
+Используется при оформлении заказа для проверки существования товара, его активности и получения актуальной цены.
+
+В качестве расширения можно добавить сущность `PriceList` для хранения истории изменения цены.
+
+Если требуется хранить историю для других атрибутов товара (например, наименование), можно добавить сущность `ProductVersion`.
+
+---
+
+### Order
+
+Основная таблица заказов `orders`.
 
 | Поле | Описание |
 |---|---|
@@ -128,11 +170,17 @@ erDiagram
 | `created_at` | Дата создания |
 | `updated_at` | Дата обновления |
 
+Основная сущность заказа.
+
+Хранит ссылку на пользователя, контактные данные, итоговую сумму и статус заказа.
+
+Контактные данные хранятся в заказе для истории, если они будут изменяться, и для упрощения фильтрации заказов по этим данным.
+
 ---
 
-### `order_items`
+### OrderItem
 
-Товары заказа.
+Таблица товаров в заказах `order_items`.
 
 | Поле | Описание |
 |---|---|
@@ -143,11 +191,19 @@ erDiagram
 | `quantity` | Количество |
 | `sum` | Итоговая сумма по позиции |
 
+Позиция товара в заказе.
+
+Хранит товар, количество, цену на момент оформления заказа.
+
+Цена хранится в заказе для истории, для упрощения расчета суммы, защиты от изменения каталога, поддержки скидок и акций.
+
+В качестве расширения можно добавить сущность `Discount`, тогда могут появиться поля Процент скидки, Сумма скидки.
+
 ---
 
-### `order_deliveries`
+### OrderDelivery
 
-Базовая таблица доставки.
+Базовая таблица доставки `order_deliveries`.
 
 | Поле | Описание |
 |---|---|
@@ -155,11 +211,17 @@ erDiagram
 | `order_id` | Ссылка на заказ |
 | `type` | Тип доставки: `pickup` или `address` |
 
+Базовая сущность доставки заказа.
+
+Хранит тип доставки: самовывоз или доставка на адрес.
+
+Данная сущность добавлена для соответствия принципу SPR, упрощения расширения, хранения общих полей доставки при необходимости.
+
 ---
 
-### `pickup_deliveries`
+### PickupDelivery
 
-Детали самовывоза.
+Таблица деталей самовывоза `pickup_deliveries`.
 
 | Поле | Описание |
 |---|---|
@@ -167,11 +229,15 @@ erDiagram
 | `order_delivery_id` | Ссылка на доставку |
 | `pickup_point_id` | Идентификатор пункта выдачи |
 
+Детали доставки для самовывоза.
+
+Хранит идентификатор пункта выдачи.
+
 ---
 
-### `address_deliveries`
+### AddressDelivery
 
-Детали доставки на адрес.
+Таблица деталей доставки на адрес `address_deliveries`.
 
 | Поле | Описание |
 |---|---|
@@ -182,11 +248,15 @@ erDiagram
 | `house` | Дом |
 | `apartment` | Квартира |
 
+Детали доставки на адрес.
+
+Хранит город, улицу, дом и квартиру.
+
 ---
 
-### `order_payments`
+### OrderPayment
 
-Базовая таблица оплаты.
+Базовая таблица оплаты `order_payments`.
 
 | Поле | Описание |
 |---|---|
@@ -196,11 +266,17 @@ erDiagram
 | `amount` | Сумма оплаты |
 | `status` | Статус оплаты |
 
+Базовая сущность оплаты заказа.
+
+Хранит способ оплаты, сумму и статус оплаты.
+
+Причина добавления данной сущности аналогична `OrderDelivery`, плюс оплата обычно имеет свой жизненный цикл, возможна интеграция с платежными системами.
+
 ---
 
-### `credit_payment_details`
+### CreditPaymentDetails
 
-Детали оплаты в кредит.
+Таблица деталей оплаты в кредит `credit_payment_details`.
 
 | Поле | Описание |
 |---|---|
@@ -208,6 +284,10 @@ erDiagram
 | `order_payment_id` | Ссылка на оплату |
 | `provider_name` | Название кредитного провайдера |
 | `term_months` | Срок кредита в месяцах |
+
+Дополнительные данные для оплаты в кредит.
+
+Используется только если выбран способ оплаты `credit`.
 
 ---
 
@@ -322,136 +402,6 @@ erDiagram
 
 ---
 
-## 4. Sequence Diagram
-
-Диаграмма описывает последовательность оформления заказа.
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant OrderController
-    participant CreateOrderRequest
-    participant OrderService
-    participant DeliveryService
-    participant PaymentService
-    participant DB
-
-    Client->>OrderController: POST /orders
-    OrderController->>CreateOrderRequest: validate request
-    CreateOrderRequest-->>OrderController: validated data
-
-    OrderController->>OrderService: createOrder(data)
-
-    OrderService->>DB: load user
-    OrderService->>DB: load products
-    OrderService->>OrderService: calculate totals
-
-    OrderService->>DeliveryService: validate delivery data
-    DeliveryService-->>OrderService: delivery is valid
-
-    OrderService->>PaymentService: validate payment data
-    PaymentService-->>OrderService: payment is valid
-
-    OrderService->>DB: begin transaction
-
-    OrderService->>DB: insert order
-    OrderService->>DB: insert order items
-    OrderService->>DB: insert order delivery
-
-    alt pickup delivery
-        OrderService->>DB: insert pickup delivery details
-    else address delivery
-        OrderService->>DB: insert address delivery details
-    end
-
-    OrderService->>DB: insert order payment
-
-    alt credit payment
-        OrderService->>DB: insert credit payment details
-    end
-
-    OrderService->>DB: commit transaction
-
-    OrderService-->>OrderController: order created
-    OrderController-->>Client: 201 Created
-```
-
----
-
-## 5. Декомпозиция решения
-
-### Сущности
-
-#### User
-
-Пользователь (клиент), который оформляет заказ.
-
-Может хранить личные данные, контакты и т.д.
-
-#### Product
-
-Товар из каталога.
-
-Используется при оформлении заказа для проверки существования товара, его активности и получения актуальной цены.
-
-В качестве расширения можно добавить сущность `PriceList` для хранения истории изменения цены.
-
-Если требуется хранить историю для других атрибутов товара (например, наименование), можно добавить сущность `ProductVersion`.
-
-#### Order
-
-Основная сущность заказа.
-
-Хранит ссылку на пользователя, контактные данные, итоговую сумму и статус заказа.
-
-Контактные данные хранятся в заказе для истории, если они будут изменяться, и для упрощения фильтрации заказов по этим данным.
-
-#### OrderItem
-
-Позиция товара в заказе.
-
-Хранит товар, количество, цену на момент оформления заказа.
-
-Цена хранится в заказе для истории, для упрощения расчета суммы, защиты от изменения каталога, поддержки скидок и акций.
-
-В качестве расширения можно добавить сущность `Discount`, тогда могут появиться поля Процент скидки, Сумма скидки.
-
-#### OrderDelivery
-
-Базовая сущность доставки заказа.
-
-Хранит тип доставки: самовывоз или доставка на адрес.
-
-Данная сущность добавлена для соответствия принципу SPR, упрощения расширения, хранения общих полей доставки при необходимости.
-
-#### PickupDelivery
-
-Детали доставки для самовывоза.
-
-Хранит идентификатор пункта выдачи.
-
-#### AddressDelivery
-
-Детали доставки на адрес.
-
-Хранит город, улицу, дом и квартиру.
-
-#### OrderPayment
-
-Базовая сущность оплаты заказа.
-
-Хранит способ оплаты, сумму и статус оплаты.
-
-Причина добавления данной сущности аналогична `OrderDelivery`, плюс оплата обычно имеет свой жизненный цикл, возможна интеграция с платежными системами.
-
-#### CreditPaymentDetails
-
-Дополнительные данные для оплаты в кредит.
-
-Используется только если выбран способ оплаты `credit`.
-
----
-
 ### Зоны ответственности
 
 #### OrderService
@@ -541,7 +491,63 @@ Enums уменьшает риск ошибок из-за строковых зн
 
 ---
 
-## 6. Последовательность задач (как делал бы)
+## 4. Sequence Diagram
+
+Диаграмма описывает последовательность оформления заказа.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant OrderController
+    participant CreateOrderRequest
+    participant OrderService
+    participant DeliveryService
+    participant PaymentService
+    participant DB
+
+    Client->>OrderController: POST /orders
+    OrderController->>CreateOrderRequest: validate request
+    CreateOrderRequest-->>OrderController: validated data
+
+    OrderController->>OrderService: createOrder(data)
+
+    OrderService->>DB: load user
+    OrderService->>DB: load products
+    OrderService->>OrderService: calculate totals
+
+    OrderService->>DeliveryService: validate delivery data
+    DeliveryService-->>OrderService: delivery is valid
+
+    OrderService->>PaymentService: validate payment data
+    PaymentService-->>OrderService: payment is valid
+
+    OrderService->>DB: begin transaction
+
+    OrderService->>DB: insert order
+    OrderService->>DB: insert order items
+    OrderService->>DB: insert order delivery
+
+    alt pickup delivery
+        OrderService->>DB: insert pickup delivery details
+    else address delivery
+        OrderService->>DB: insert address delivery details
+    end
+
+    OrderService->>DB: insert order payment
+
+    alt credit payment
+        OrderService->>DB: insert credit payment details
+    end
+
+    OrderService->>DB: commit transaction
+
+    OrderService-->>OrderController: order created
+    OrderController-->>Client: 201 Created
+```
+
+---
+
+## 5. Последовательность задач (как делал бы)
 
 - настройка локального окружения в Docker (PHP, Laravel и т.д.);
 - базовая подготовка проекта (подключение библиотек и пакетов, структура каталогов);
@@ -555,7 +561,7 @@ Enums уменьшает риск ошибок из-за строковых зн
 
 ---
 
-## 7. Примеры возможностей для расширения
+## 6. Примеры возможностей для расширения
 
 - новые типы доставки, например постамат;
 - новые способы оплаты, например PayPal;
