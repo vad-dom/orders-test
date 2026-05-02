@@ -23,7 +23,7 @@ erDiagram
     order_payments ||--o| credit_payment_details : has
 
     users {
-        bigint id
+        int id
         string name
         string email
         string password
@@ -32,7 +32,7 @@ erDiagram
     }
 
     products {
-        bigint id
+        int id
         string name
         decimal price
         boolean is_active
@@ -42,7 +42,7 @@ erDiagram
 
     orders {
         bigint id
-        bigint user_id
+        int user_id
         string phone
         string email
         decimal total_sum
@@ -54,7 +54,7 @@ erDiagram
     order_items {
         bigint id
         bigint order_id
-        bigint product_id
+        int product_id
         decimal price
         int quantity
         decimal sum
@@ -73,7 +73,7 @@ erDiagram
     pickup_deliveries {
         bigint id
         bigint order_delivery_id
-        bigint pickup_point_id
+        int pickup_point_id
         datetime created_at
         datetime updated_at
     }
